@@ -42,11 +42,7 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       },
-
-    dietsrecipe: {
-       type: DataTypes.ARRAY(DataTypes.STRING),
-       allowNull: false,
-       }  
+  
   },
   {timestamps: false}
   );
