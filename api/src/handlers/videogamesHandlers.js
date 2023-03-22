@@ -1,47 +1,43 @@
-//const {createVideogame, videogameById, getAllVideogames, searchByname} = require("../controllers/videogamesController");
+const {createVideogame, VideogameById,searchByName,getAllVideogames} = require("../controllers/videogamesController");
 
 
-//1
+//1 NAME Y ALL
 const getVideogamesHandler =  async (req, res) =>{
-    /*
     const {name} = req.query;
-    const results = name ? await searchByname(name) : await getAllVideogames();
+    const results = name ? await searchByName(name) : await getAllVideogames();
     res.status(200).json(results);
-    */
-   res.send("get videogames");
 }
 
-//2
-const getIdVideogamestHandler = async(req, res) => {
+//2 POR ID
+const getIdVideogamesHandler = async(req, res) => {
     const {idVideogame} = req.params;
     const source = isNaN(idVideogame) ? "db" : "api";
-/*
+
     try {
         const videogame = await VideogameById(idVideogame,source);
         res.status(200).json(videogame);
     } catch (error) {
         res.status(400).json({error: error.message});
     }
-    */
-    res.send(`Estoy verificando la info de ${idVideogame}`);
+
+    
 }
-//3
+//3 POST
 const postVideogamesHandler = async (req, res) => {
-    /*
     const {name, description, platforms, image, releasedAt, rating, genreIds} = req.body;
 
     try {
         const newVideogame = await createVideogame(name, description, platforms, image, releasedAt, rating, genreIds);
-        res.status(201).json(newRecipe); 
+        res.status(201).json(newVideogame); 
     } catch (error) {
        res.status(400).json({error: error.message}); 
     }
- */
+
 res.send("post videogames");
 }
 
 module.exports = {
-    getIdVideogamestHandler,
+    getIdVideogamesHandler,
     postVideogamesHandler,
     getVideogamesHandler,
 }

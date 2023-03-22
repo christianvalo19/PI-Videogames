@@ -1,6 +1,7 @@
-/*
-const {Videogame} = require("../db");
+
+const {Videogame, Genre} = require("../db");
 const axios = require ("axios");
+const { Op } = require("sequelize");
 require("dotenv").config();
 
 const { API_KEY } = process.env;
@@ -8,36 +9,47 @@ const { API_KEY } = process.env;
 const max_result = 15;
 
 
-const createVideogame = async(title, image, summary, healthScore, anallyzedinstructions, diets) =>
-await recipe.create({title, image, summary, healthScore, anallyzedinstructions, diets});
+
 
 //1
 //PRIMERA RUTA BYID:
-const videogameById = async(idVideogame,source) => {
-    switch (source) {
-        case "api":
-            const videogamesApiRaw = (await axios.get(`https://api.spoonacular.com/recipes/${idRecipe}/information?apiKey=${API_KEY}`)
-            ).data.results;
-            const apiRecipes = cleanArray(recipeapiRaw);
-            return apiRecipes;
-        case "db":
-            const recipedb = await recipe.findByPk(idRecipe);
-            return recipedb;
-            break;
-    
-        default:
-
-            break;
+const VideogameById = async(idVideogame,source) => {
+  const videogame = 
+  source==="api"
+  ? (await axios.get (`https://api.rawg.io/api/games/${idVideogame}?key=${API_KEY}`))
+  .data
+  : await Videogame.findByPk(idVideogame);
+  if (source==="api"){
+    return {
+      id: videogame.id,
+      name: videogame.name,
+      created: false,
+      description: videogame.description,
+      rating: videogame.rating,
+      image: videogame.background_image,
+      releasedAt: videogame.released,
+      platforms: videogame.platforms.map(
+        (platform) => (platform.platform.name)
+      ).join(' - '),
+      genres: videogame.genres.map(
+        (genre) => ({
+          id: genre.id,
+          name: genre.name
+          })
+      )
     }
-}
+  }
+  return videogame;
+  }
+
+
 
 //2
 //SEGUNDA RUTA VIDEOGAMES SIN NAME
 const getAllVideogames = async() => {
     const videogamesDB = await getAllVideogamesDB();
     const videogamesAPI = await getAllVideogamesAPI();
-    const videogames = [ ...videogamesDB, ...videogamesAPI];
-    return videogames;
+    return [ ...videogamesDB, ...videogamesAPI];
     };
 
     //FUNCION GETALLVIDEOGAMESDB
@@ -74,8 +86,14 @@ const getAllVideogames = async() => {
           (e) => ({
             id: e.id,
             name: e.name,
+            created: false,
+            description: e.description,
             rating: e.rating,
             image: e.background_image,
+            releasedAt: e.released,
+            platforms: e.platforms.map(
+              (platform) => (platform.platform.name)
+            ).join(' - '),
             genres: e.genres.map(
                                     (genre) => ({
                                       id: genre.id,
@@ -89,14 +107,9 @@ const getAllVideogames = async() => {
 
 //3
 //TERCERA RUTA VIDEOGAME POR QUERY
-const searchByname = async(name) => {
+const searchByName = async(name) => {
       const videogames = name ? await getVideogamesByName(name) : await getAllVideogames();
-      if  (videogames.length === 0){
-        res.json({warning: "Could not find any videogame"})
-      }
-      else{
-        res.json(videogames);
-      }
+      return videogames;
 }
 
     //getByName
@@ -113,36 +126,62 @@ const searchByname = async(name) => {
         
       }
 
-
-
-
-   //Limpiar array de los datos 
-const cleanArray = (arr) =>
-    arr.map((e) => {
-        const steps = e.analyzedInstructions[0].steps.map((step) => ({
-            number: step.number,
-            step: step.step,
-            length: step.length
-            ? {number: step.length.number, unit: step.length.unit}
-            : null,
-            ingredients: "NIY",
-        }));
-
-        return {
-            id: e.id,
-            name: e.title,
-            image: e.image,
-            summary: e.summary,
-            healthScore: e.healthScore,
-            analyzedInstructions: steps,
-            diets: e.diets,
-            created: false,
+      //byName DB y API
+      const getVideogamesByNameDB = async (name) => {
+  
+        const videogames = await Videogame.findAll({
+          where: {
+            name: { [Op.iLike]: `%${name}%` }
+          },
+          attributes: ['id', 'name', 'image', 'rating'],
+          limit : max_result,
+          include: {
+            model: Genre,
+            attributes: ['id', 'name'],
+            through: {
+              attributes: []
             }
-    });
+          }
+        });
+        return videogames;
+      }
+      
+      const getVideogamesByNameAPI = async (name, max) => {
+      
+        const videogamesApi = await axios.get(`https://api.rawg.io/api/games?search=${name}&key=${API_KEY}`);   
+        //console.log(videogamesApi);
+        return videogamesApi.data.results.slice(0,max).map(
+          (e) => ({
+            id: e.id,
+            name: e.name,
+            created: false,
+            description: e.description,
+            rating: e.rating,
+            image: e.background_image,
+            releasedAt: e.released,
+            platforms: e.platforms.map(
+              (platform) => (platform.platform.name)
+            ).join(' - '),
+            genres: e.genres.map(
+                                    (genre) => ({
+                                      id: genre.id,
+                                      name: genre.name
+                                      })
+                                  )
+          }
+          ))
+      }
+
+
+//4
+//CUARTA RUTA, CREAR VIDEOGAME
+
+const createVideogame = async(name, description, platforms, image, releasedAt, rating, genreIds) =>
+await Videogame.create({name, description, platforms, image, releasedAt, rating, genreIds});
+
+
+
+
     
-    
+module.exports = {createVideogame,VideogameById,searchByName,getAllVideogames}
 
-
-module.exports = {createVideogame,videogameById, getAllVideogames, searchByname}
-
-*/
