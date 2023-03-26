@@ -55,7 +55,7 @@ const getAllVideogames = async() => {
     //FUNCION GETALLVIDEOGAMESDB
     const getAllVideogamesDB = async () => {
         const videogames = await Videogame.findAll({
-          attributes: ['id','name','image','rating'],
+          attributes: ['id','name', 'description','platforms','image','releasedAt','rating','created'],
           include: {
             model: Genre,
             attributes: ['id', 'name'],
@@ -81,7 +81,6 @@ const getAllVideogames = async() => {
             .concat(values[2].data.results);
         });
     
-        console.log(videogamesApi.length);
         return videogamesApi.map(
           (e) => ({
             id: e.id,
@@ -133,7 +132,7 @@ const searchByName = async(name) => {
           where: {
             name: { [Op.iLike]: `%${name}%` }
           },
-          attributes: ['id', 'name', 'image', 'rating'],
+          attributes: ['id','name', 'description','platforms','image','releasedAt','rating','created'],
           limit : max_result,
           include: {
             model: Genre,
@@ -148,8 +147,7 @@ const searchByName = async(name) => {
       
       const getVideogamesByNameAPI = async (name, max) => {
       
-        const videogamesApi = await axios.get(`https://api.rawg.io/api/games?search=${name}&key=${API_KEY}`);   
-        //console.log(videogamesApi);
+        const videogamesApi = await axios.get(`https://api.rawg.io/api/games?search=${name}&key=${API_KEY}`);  
         return videogamesApi.data.results.slice(0,max).map(
           (e) => ({
             id: e.id,
