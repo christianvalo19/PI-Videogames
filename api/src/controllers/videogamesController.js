@@ -6,8 +6,6 @@ require("dotenv").config();
 
 const { API_KEY } = process.env;
 
-const max_result = 15;
-
 
 
 
@@ -18,7 +16,13 @@ const VideogameById = async(idVideogame,source) => {
   source==="api"
   ? (await axios.get (`https://api.rawg.io/api/games/${idVideogame}?key=${API_KEY}`))
   .data
-  : await Videogame.findByPk(idVideogame);
+
+  : await Videogame.findByPk(idVideogame, {
+    include: {
+      model: Genre,
+    },
+  });
+
   if (source==="api"){
     return {
       id: videogame.id,
@@ -114,26 +118,20 @@ const searchByName = async(name) => {
     //getByName
     const getVideogamesByName = async (name) => {
         const videogamesDB = await getVideogamesByNameDB(name);
-        if (videogamesDB.length < max_result) {
-          const videogamesAPI = await getVideogamesByNameAPI(name, max_result - videogamesDB.length);
-          const videogames = [ ...videogamesDB, ...videogamesAPI];
-          return videogames;
-        }
-        else {
-          return videogamesDB;
-        }
-        
+        const videogamesAPI = await getVideogamesByNameAPI(name);
+        const videogames = [ ...videogamesDB, ...videogamesAPI];
+        return videogames;
       }
 
-      //byName DB y API
+      //byName DB
       const getVideogamesByNameDB = async (name) => {
   
         const videogames = await Videogame.findAll({
           where: {
             name: { [Op.iLike]: `%${name}%` }
           },
-          attributes: ['id','name', 'description','platforms','image','releasedAt','rating','created'],
-          limit : max_result,
+          attributes: ['id','name','image','rating'],
+          //attributes: ['id','name', 'description','platforms','image','releasedAt','rating','created'],
           include: {
             model: Genre,
             attributes: ['id', 'name'],
@@ -144,11 +142,11 @@ const searchByName = async(name) => {
         });
         return videogames;
       }
-      
-      const getVideogamesByNameAPI = async (name, max) => {
+      //byName API
+      const getVideogamesByNameAPI = async (name) => {
       
         const videogamesApi = await axios.get(`https://api.rawg.io/api/games?search=${name}&key=${API_KEY}`);  
-        return videogamesApi.data.results.slice(0,max).map(
+        return videogamesApi.data.results.slice(0,15).map(
           (e) => ({
             id: e.id,
             name: e.name,
@@ -174,9 +172,21 @@ const searchByName = async(name) => {
 //4
 //CUARTA RUTA, CREAR VIDEOGAME
 
-const createVideogame = async(name, description, platforms, image, releasedAt, rating, genreIds) =>
-await Videogame.create({name, description, platforms, image, releasedAt, rating, genreIds});
+const createVideogame = async(name, description, platforms, image, releasedAt, rating,genreIds) => {
+const videogameSinGenre = {name, description, platforms, image, releasedAt, rating,genreIds}
+const videogameSinGenreCreated = await Videogame.create(videogameSinGenre);
 
+const genres = await Promise.all(
+  genreIds.map(async (genreId) => await Genre.findOne({
+    where: {
+      id: genreId
+    }
+  }))
+);
+const videogameFinal = await videogameSinGenreCreated.addGenre(genres)
+
+return videogameSinGenreCreated;
+}
 
 
 

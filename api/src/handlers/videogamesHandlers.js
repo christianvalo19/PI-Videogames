@@ -25,16 +25,15 @@ const getIdVideogamesHandler = async(req, res) => {
 //3 POST
 const postVideogamesHandler = async (req, res) => {
     const {name, description, platforms, image, releasedAt, rating, genreIds} = req.body;
-
     try {
         const newVideogame = await createVideogame(name, description, platforms, image, releasedAt, rating, genreIds);
         res.status(201).json(newVideogame); 
     } catch (error) {
        res.status(400).json({error: error.message}); 
     }
-
-res.send("post videogames");
 }
+
+//name, description, platforms, image, releasedAt, rating, genreIds
 
 module.exports = {
     getIdVideogamesHandler,

@@ -1,0 +1,10 @@
+.mainContainer{
+    display: flex;
+    background-color: #cecece;
+    flex-direction: row;
+    justify-content: space-around;
+    border-radius: 15px;
+    padding: 5px;
+    margin: 5px;
+}
+
